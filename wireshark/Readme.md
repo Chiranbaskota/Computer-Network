@@ -1,7 +1,8 @@
 **DHCP Process Explained**
+
 This document explains the process of obtaining an IP address from a DHCP server based on captured network packets.
 
-Packet Summary
+
 
 **DHCP Process**
 
