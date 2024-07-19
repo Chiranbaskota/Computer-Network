@@ -42,8 +42,13 @@ The DHCP server acknowledges the client's DHCP Request with a DHCP ACK message. 
 The DHCP process involves several steps:
 
 Release: The client releases its current IP address.
+
 Discover: The client broadcasts a message to discover available DHCP servers.
+
 Offer: The server responds with an offer of an IP address.
+
 Request: The client requests to lease the offered IP address.
+
 Acknowledge: The server acknowledges and leases the IP address to the client.
+
 This exchange ensures that the client obtains a valid IP address and network configuration from the DHCP server.
