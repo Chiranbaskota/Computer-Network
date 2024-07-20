@@ -1,34 +1,73 @@
-# Wireshark IPv6 Multicast Listener Report Analysis
+# Wireshark IPv6 Packet Analysis
 
-This repository contains examples and explanations on how to capture and analyze ICMPv6 Multicast Listener Report messages using Wireshark.
+This repository contains a Wireshark capture file filtered for IPv6 traffic and an analysis of the captured packets.
 
-## Overview
+## Filtering IPv6 Traffic in Wireshark
 
-Wireshark is a powerful network protocol analyzer used for network troubleshooting, analysis, and development. This guide focuses on capturing and analyzing ICMPv6 Multicast Listener Report messages, which are part of the Multicast Listener Discovery (MLD) protocol in IPv6.
-
-## ICMPv6 Multicast Listener Report Message
-
-ICMPv6 Multicast Listener Report messages are used by IPv6 routers to discover the presence of multicast listeners on their directly attached links. These messages help in the efficient management of multicast traffic within a network.
-
-## Example Capture
-
-Here is an example of captured ICMPv6 Multicast Listener Report messages filtered in Wireshark:
+To filter for IPv6 traffic in Wireshark, use the following display filter:
 
 
-### Explanation of Fields
+This filter will display only the packets that use the IPv6 protocol.
 
-- *Frame Number*: The sequential number assigned to the frame in the capture.
-- *Time*: The timestamp indicating when the frame was captured.
-- *Source*: The IPv6 address of the source sending the packet.
-- *Destination*: The multicast IPv6 address to which the packet is sent.
-- *Protocol*: The protocol used, which is ICMPv6 in this case.
-- *Length*: The length of the frame in bytes.
-- *Info*: A brief description of the frame.
+## Captured Packets Analysis
 
-## How to Capture ICMPv6 Multicast Listener Report Messages
+### Packet Details
 
-1. *Open Wireshark*: Launch Wireshark on your computer.
-2. *Start Capturing*: Click on the interface you want to capture traffic from and start capturing.
-3. *Apply IPv6 Filter*: Use the filter ipv6 to focus on IPv6 traffic.
-4. *Identify ICMPv6 Messages*: Look for ICMPv6 packets with the description "Multicast Listener Report Message v2".
+1. **Packet 1**
+   - **Source Address**: `2400:1a00:b1e0:6cf1:b03b:54d7:3e7b:240c`
+   - **Destination Address**: `2a03:ec00:b95d:bca4:43c4:e9cd:edf4:452a`
+   - **Protocol**: BitTorrent
+   - **Length**: 142 bytes
+   - **Info**: Handshake
 
+2. **Packet 2**
+   - **Source Address**: `2400:1a00:b1e0:6cf1:b03b:54d7:3e7b:240c`
+   - **Destination Address**: `2a03:ec00:b138:5fa:f8b0:14bd:a972:f5e5`
+   - **Protocol**: TCP
+   - **Length**: 438 bytes
+   - **Info**: 60536 → 59827 [PSH, ACK] Seq=1 Ack=1 Win=64800 Len=364
+
+3. **Packet 3**
+   - **Source Address**: `2400:1a00:b1e0:6cf1:b03b:54d7:3e7b:240c`
+   - **Destination Address**: `2a03:ec00:b15a:3cc5:b0a8:ab0f:6eb4:aa2e`
+   - **Protocol**: BitTorrent
+   - **Length**: 142 bytes
+   - **Info**: Handshake
+
+4. **Packet 4**
+   - **Source Address**: `2400:1a00:b1e0:6cf1:b03b:54d7:3e7b:240c`
+   - **Destination Address**: `2a03:ec00:b15a:3cc5:5676:14bd:a972:f5e5`
+   - **Protocol**: TCP
+   - **Length**: 645 bytes
+   - **Info**: 60560 → 59827 [PSH, ACK] Seq=1 Ack=1 Win=64800 Len=571
+
+8. **Packet 8**
+   - **Source Address**: `2400:1a00:b1e0:6cf1:b03b:54d7:3e7b:240c`
+   - **Destination Address**: `2a03:ec00:b15a:3cc5:b0a8:ab0f:6eb4:aa64`
+   - **Protocol**: TCP
+   - **Length**: 290 bytes
+   - **Info**: 60544 → 59827 [PSH, ACK] Seq=1 Ack=1 Win=64800 Len=216
+
+9. **Packet 9**
+   - **Source Address**: `2400:1a00:b1e0:6cf1:b03b:54d7:3e7b:240c`
+   - **Destination Address**: `2a03:ec00:b15a:3cc5:b0a8:ab0f:6eb4:aa2e`
+   - **Protocol**: TCP
+   - **Length**: 142 bytes
+   - **Info**: [TCP Retransmission] 60561 → 35251 [PSH, ACK] Seq=1 Ack=1 Win=64800 Len=68
+
+## Field Descriptions
+
+- **Version**: Indicates the IP version, which is 6 for IPv6.
+- **Traffic Class**: Used for traffic prioritization.
+- **Flow Label**: Used for special handling of packet flows.
+- **Payload Length**: Length of the data following the IPv6 header.
+- **Next Header**: Indicates the type of the next header (e.g., TCP, UDP).
+- **Hop Limit**: Number of hops the packet can take before being discarded.
+- **Source Address**: The IPv6 address of the sender.
+- **Destination Address**: The IPv6 address of the recipient.
+
+## Usage
+
+1. Open the capture file in Wireshark.
+2. Apply the IPv6 filter: `ipv6`
+3. Analyze the packets based on the provided details.
