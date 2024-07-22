@@ -44,6 +44,8 @@ def decode_dict(bencoded_value):
         decoded_dict[decoded_key.decode()] = decoded_value
     return decoded_dict, bencoded_remainder[1:]
 def decode_bencode(bencoded_value):
+    if not bencoded_value:
+        raise ValueError("Empty bencoded value.")
     if chr(bencoded_value[0]).isdigit():
         return decode_string(bencoded_value)
     elif chr(bencoded_value[0]) == "i":
@@ -53,9 +55,7 @@ def decode_bencode(bencoded_value):
     elif chr(bencoded_value[0]) == "d":
         return decode_dict(bencoded_value)
     else:
-        raise NotImplementedError(
-            f"We only support strings, integers, lists, and dicts."
-        )
+        raise NotImplementedError("We only support strings, integers, lists, and dicts.")
 def bencode_string(unencoded_value):
     length = len(unencoded_value)
     return (str(length) + ":" + unencoded_value).encode()
@@ -87,13 +87,22 @@ def bencode(unencoded_value):
         return bencode_dict(unencoded_value)
     else:
         raise ValueError("Can only bencode strings, ints, lists, or dicts.")
+
 def decode_torrentfile(filename):
-    with open(filename, "rb") as f:
-        bencoded_content = f.read()
-        decoded_value, remainder = decode_bencode(bencoded_content)
-        if remainder:
-            raise ValueError("Undecoded remainder.")
-        return decoded_value
+    try:
+        with open(filename, "rb") as f:
+            bencoded_content = f.read()
+            if not bencoded_content:
+                raise ValueError(f"The file {filename} is empty.")
+            decoded_value, remainder = decode_bencode(bencoded_content)
+            if remainder:
+                raise ValueError("Undecoded remainder.")
+            return decoded_value
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File {filename} not found.")
+    except Exception as e:
+        raise ValueError(f"Error reading or decoding file {filename}: {e}")
+
 # Use list comprehension to return a split string of hashes.
 def piece_hashes(pieces):
     n = 20
@@ -206,7 +215,9 @@ def receive_message(s):
     while len(message) < int.from_bytes(length):
         message += s.recv(int.from_bytes(length) - len(message))
     return length + message
-def download_piece(outputfile, filename, piececount):
+import tempfile
+
+def download_piece(outputfile, filename, piececount, tempdir):
     decoded_value = decode_torrentfile(filename)
     peers = split_peers(get_peers(filename))
     # For the sake of simplicity, at this stage, just use the first peer:
@@ -259,29 +270,30 @@ def download_piece(outputfile, filename, piececount):
     if piece_hash != local_hash:
         raise ValueError("Piece hash mismatch.")
     # Write piece to disk
-    with open(outputfile, "wb") as piece_file:
+    piece_path = os.path.join(tempdir, f"test-{piececount}")
+    with open(piece_path, "wb") as piece_file:
         piece_file.write(piece)
     # Clean up
     s.close()
     # Return piece completed and location
-    return piececount, outputfile
-# TODO: Refactor download_pieces to use a buffer instead of intermediate files.
-# TODO: Use a work queue to retry pieces and try different peers.
+    return piececount, piece_path
+
+
 def download(outputfile, filename):
     decoded_value = decode_torrentfile(filename)
     total_pieces = len(piece_hashes(decoded_value["info"]["pieces"]))
     piecefiles = []
-    for piece in range(0, total_pieces):
-        p, o = download_piece("/tmp/test-" + str(piece), filename, piece)
-        piecefiles.append(o)
-    with open(outputfile, "ab") as result_file:
-        for piecefile in piecefiles:
-            with open(piecefile, "rb") as piece_file:
-                result_file.write(piece_file.read())
-            os.remove(piecefile)
-# json.dumps() can't handle bytes, but bencoded "strings" need to be
-# bytestrings since they might contain non utf-8 characters.
-#
+    with tempfile.TemporaryDirectory() as tempdir:
+        for piece in range(0, total_pieces):
+            p, o = download_piece("/tmp/test-" + str(piece), filename, piece, tempdir)
+            piecefiles.append(o)
+        with open(outputfile, "ab") as result_file:
+            for piecefile in piecefiles:
+                with open(piecefile, "rb") as piece_file:
+                    result_file.write(piece_file.read())
+                os.remove(piecefile)
+
+
 # Let's convert them to strings for printing to the console.
 def bytes_to_str(data):
     if isinstance(data, bytes):
