@@ -5,6 +5,8 @@ import hashlib
 import requests
 import struct
 import os
+import tempfile
+
 def decode_string(bencoded_value):
     first_colon_index = bencoded_value.find(b":")
     if first_colon_index == -1:
@@ -15,6 +17,7 @@ def decode_string(bencoded_value):
     ]
     bencoded_remainder = bencoded_value[first_colon_index + 1 + length_string :]
     return decoded_string, bencoded_remainder
+
 def decode_int(bencoded_value):
     if chr(bencoded_value[0]) != "i":
         raise ValueError("Not an integer")
@@ -24,6 +27,7 @@ def decode_int(bencoded_value):
     decoded_int = int(bencoded_value[1:end_int])
     bencoded_remainder = bencoded_value[end_int + 1 :]
     return decoded_int, bencoded_remainder
+
 def decode_list(bencoded_value):
     if chr(bencoded_value[0]) != "l":
         raise ValueError("Not a list")
@@ -33,6 +37,7 @@ def decode_list(bencoded_value):
         decoded_value, bencoded_remainder = decode_bencode(bencoded_remainder)
         decoded_list.append(decoded_value)
     return decoded_list, bencoded_remainder[1:]
+
 def decode_dict(bencoded_value):
     if chr(bencoded_value[0]) != "d":
         raise ValueError("Not a dict")
@@ -43,6 +48,7 @@ def decode_dict(bencoded_value):
         decoded_value, bencoded_remainder = decode_bencode(bencoded_remainder)
         decoded_dict[decoded_key.decode()] = decoded_value
     return decoded_dict, bencoded_remainder[1:]
+
 def decode_bencode(bencoded_value):
     if not bencoded_value:
         raise ValueError("Empty bencoded value.")
@@ -56,24 +62,33 @@ def decode_bencode(bencoded_value):
         return decode_dict(bencoded_value)
     else:
         raise NotImplementedError("We only support strings, integers, lists, and dicts.")
+<<<<<<< HEAD
+=======
+
+>>>>>>> b01c030 (commit after adding connection on same network)
 def bencode_string(unencoded_value):
     length = len(unencoded_value)
     return (str(length) + ":" + unencoded_value).encode()
+
 def bencode_bytes(unencoded_value):
     length = len(unencoded_value)
     return str(length).encode() + b":" + unencoded_value
+
 def bencode_int(unencoded_value):
     return ("i" + str(unencoded_value) + "e").encode()
+
 def bencode_list(unencoded_value):
     result = b"l"
     for i in unencoded_value:
         result += bencode(i)
     return result + b"e"
+
 def bencode_dict(unencoded_value):
     result = b"d"
     for k in unencoded_value:
         result += bencode(k) + bencode(unencoded_value[k])
     return result + b"e"
+
 def bencode(unencoded_value):
     if isinstance(unencoded_value, str):
         return bencode_string(unencoded_value)
@@ -103,12 +118,16 @@ def decode_torrentfile(filename):
     except Exception as e:
         raise ValueError(f"Error reading or decoding file {filename}: {e}")
 
+<<<<<<< HEAD
 # Use list comprehension to return a split string of hashes.
+=======
+>>>>>>> b01c030 (commit after adding connection on same network)
 def piece_hashes(pieces):
     n = 20
     if len(pieces) % n != 0:
         raise ValueError("Piece hashes do not add up to a multiple of", n, "bytes.")
     return [pieces[i : i + n] for i in range(0, len(pieces), n)]
+
 def print_info(filename):
     decoded_value = decode_torrentfile(filename)
     print("Tracker URL:", decoded_value["announce"].decode())
@@ -120,9 +139,9 @@ def print_info(filename):
     hashes = piece_hashes(decoded_value["info"]["pieces"])
     for h in hashes:
         print(h.hex())
+
 def get_peers(filename):
     decoded_value = decode_torrentfile(filename)
-    # Note: The requests library automatically encodes these parameters properly, including the info_hash
     tracker_url = decoded_value["announce"].decode()
     info_hash = hashlib.sha1(bencode(decoded_value["info"])).digest()
     peer_id = "00112233445566778899"
@@ -143,6 +162,7 @@ def get_peers(filename):
     result = requests.get(tracker_url, params=params)
     decoded_result = decode_bencode(result.content)[0]
     return decoded_result["peers"]
+
 def split_peers(peers):
     if len(peers) % 6 != 0:
         raise ValueError(
@@ -154,6 +174,7 @@ def split_peers(peers):
         port = str(int.from_bytes(peer[4:], byteorder="big", signed=False))
         uncompacted_peers.append(ip + ":" + port)
     return uncompacted_peers
+
 def init_handshake(filename, peer):
     decoded_value = decode_torrentfile(filename)
     peer_colon = peer.find(":")
@@ -168,24 +189,25 @@ def init_handshake(filename, peer):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((ip, port))
     s.send(message)
-    # Only grab the first 68 bytes, that's the handshake. Anything after this is the start of the bitfield.
     received_message = s.recv(68)
     return s, received_message
-# The payload needs to already be in bytes.
+
 def construct_message(message_id, payload):
-    message_id = message_id.to_bytes(1)
+    message_id = message_id.to_bytes(1, byteorder='big')
     message = message_id + payload
     length = len(message)
-    length_prefix = length.to_bytes(4, byteorder="big")
+    length_prefix = length.to_bytes(4, byteorder='big')
     message = length_prefix + message
     return message
+
 def verify_message(message, message_id):
     if message[4] != message_id:
         raise ValueError(
             "Expected message of id %s, but received id %s" % (message_id, message[4])
         )
-    if int.from_bytes(message[:4]) != len(message[4:]):
+    if int.from_bytes(message[:4], byteorder='big') != len(message[4:]):
         raise ValueError("Message wrong length.")
+
 def request_block(s, piece_index, block_index, length):
     index = piece_index
     begin = block_index * 2**14
@@ -198,33 +220,36 @@ def request_block(s, piece_index, block_index, length):
     piece_message = receive_message(s)
     while piece_message[4] != 7:
         piece_message = receive_message(s)
-    # Verify that the block has the payload we expect:
     verify_message(piece_message, 7)
-    received_index = int.from_bytes(piece_message[5:9])
-    received_begin = int.from_bytes(piece_message[9:13])
+    received_index = int.from_bytes(piece_message[5:9], byteorder='big')
+    received_begin = int.from_bytes(piece_message[9:13], byteorder='big')
     if received_index != index or received_begin != begin:
         raise ValueError("Piece message does not have expected payload.")
     block = piece_message[13:]
     return block
+
 def receive_message(s):
     length = s.recv(4)
-    while not length or not int.from_bytes(length):
-        length = s.recv(4)
-    message = s.recv(int.from_bytes(length))
-    # If we didn't receive the full message for some reason, keep gobbling.
-    while len(message) < int.from_bytes(length):
-        message += s.recv(int.from_bytes(length) - len(message))
+    while len(length) < 4:
+        length += s.recv(4 - len(length))
+    message_length = int.from_bytes(length, byteorder='big')
+    message = s.recv(message_length)
+    while len(message) < message_length:
+        message += s.recv(message_length - len(message))
     return length + message
+<<<<<<< HEAD
 import tempfile
+=======
+
+>>>>>>> b01c030 (commit after adding connection on same network)
 
 def download_piece(outputfile, filename, piececount, tempdir):
     decoded_value = decode_torrentfile(filename)
     peers = split_peers(get_peers(filename))
     # For the sake of simplicity, at this stage, just use the first peer:
-    peer = peers[1]
+    peer = peers[0]
     s, received_message = init_handshake(filename, peer)
     # Wait for bitfield message:
-    # It's only sent once, so no need to do a while here.
     bitfield = receive_message(s)
     verify_message(bitfield, 5)
     # Build and send interested message
@@ -278,13 +303,20 @@ def download_piece(outputfile, filename, piececount, tempdir):
     # Return piece completed and location
     return piececount, piece_path
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b01c030 (commit after adding connection on same network)
 def download(outputfile, filename):
     decoded_value = decode_torrentfile(filename)
     total_pieces = len(piece_hashes(decoded_value["info"]["pieces"]))
     piecefiles = []
     with tempfile.TemporaryDirectory() as tempdir:
+<<<<<<< HEAD
         for piece in range(0, total_pieces):
+=======
+        for piece in range(total_pieces):
+>>>>>>> b01c030 (commit after adding connection on same network)
             p, o = download_piece("/tmp/test-" + str(piece), filename, piece, tempdir)
             piecefiles.append(o)
         with open(outputfile, "ab") as result_file:
@@ -293,16 +325,18 @@ def download(outputfile, filename):
                     result_file.write(piece_file.read())
                 os.remove(piecefile)
 
+<<<<<<< HEAD
 
 # Let's convert them to strings for printing to the console.
+=======
+>>>>>>> b01c030 (commit after adding connection on same network)
 def bytes_to_str(data):
     if isinstance(data, bytes):
         return data.decode()
     raise TypeError(f"Type not serializable: {type(data)}")
+
 def main():
     command = sys.argv[1]
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
-    # print("Logs from your program will appear here!")
     if command == "decode":
         bencoded_value = sys.argv[2].encode()
         decoded_value, remainder = decode_bencode(bencoded_value)
@@ -339,8 +373,8 @@ def main():
             )
         outputfile = sys.argv[3]
         filename = sys.argv[4]
-        piececount = sys.argv[5]
-        p, o = download_piece(outputfile, filename, int(piececount))
+        piececount = int(sys.argv[5])
+        p, o = download_piece(outputfile, filename, piececount, tempfile.gettempdir())
         print("Piece %i downloaded to %s" % (p, o))
     elif command == "download":
         if len(sys.argv) != 5:
@@ -353,5 +387,7 @@ def main():
         print("Download %s to %s" % (filename, outputfile))
     else:
         raise NotImplementedError(f"Unknown command {command}")
+
 if __name__ == "__main__":
     main()
+
