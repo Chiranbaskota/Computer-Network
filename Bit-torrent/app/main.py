@@ -62,10 +62,7 @@ def decode_bencode(bencoded_value):
         return decode_dict(bencoded_value)
     else:
         raise NotImplementedError("We only support strings, integers, lists, and dicts.")
-<<<<<<< HEAD
-=======
 
->>>>>>> b01c030 (commit after adding connection on same network)
 def bencode_string(unencoded_value):
     length = len(unencoded_value)
     return (str(length) + ":" + unencoded_value).encode()
@@ -118,10 +115,6 @@ def decode_torrentfile(filename):
     except Exception as e:
         raise ValueError(f"Error reading or decoding file {filename}: {e}")
 
-<<<<<<< HEAD
-# Use list comprehension to return a split string of hashes.
-=======
->>>>>>> b01c030 (commit after adding connection on same network)
 def piece_hashes(pieces):
     n = 20
     if len(pieces) % n != 0:
@@ -237,11 +230,6 @@ def receive_message(s):
     while len(message) < message_length:
         message += s.recv(message_length - len(message))
     return length + message
-<<<<<<< HEAD
-import tempfile
-=======
-
->>>>>>> b01c030 (commit after adding connection on same network)
 
 def download_piece(outputfile, filename, piececount, tempdir):
     decoded_value = decode_torrentfile(filename)
@@ -303,20 +291,12 @@ def download_piece(outputfile, filename, piececount, tempdir):
     # Return piece completed and location
     return piececount, piece_path
 
-<<<<<<< HEAD
-
-=======
->>>>>>> b01c030 (commit after adding connection on same network)
 def download(outputfile, filename):
     decoded_value = decode_torrentfile(filename)
     total_pieces = len(piece_hashes(decoded_value["info"]["pieces"]))
     piecefiles = []
     with tempfile.TemporaryDirectory() as tempdir:
-<<<<<<< HEAD
-        for piece in range(0, total_pieces):
-=======
         for piece in range(total_pieces):
->>>>>>> b01c030 (commit after adding connection on same network)
             p, o = download_piece("/tmp/test-" + str(piece), filename, piece, tempdir)
             piecefiles.append(o)
         with open(outputfile, "ab") as result_file:
@@ -325,11 +305,6 @@ def download(outputfile, filename):
                     result_file.write(piece_file.read())
                 os.remove(piecefile)
 
-<<<<<<< HEAD
-
-# Let's convert them to strings for printing to the console.
-=======
->>>>>>> b01c030 (commit after adding connection on same network)
 def bytes_to_str(data):
     if isinstance(data, bytes):
         return data.decode()
