@@ -1,0 +1,61 @@
+# HTTP POST Request Analysis
+
+This document provides a detailed analysis of an HTTP POST request captured in hexadecimal format. The breakdown of the request includes the Ethernet frame, IP header, TCP header, and the HTTP request itself.
+
+## Hexadecimal Code Breakdown
+
+### Ethernet Frame
+- **c4 48 fa 04 ed c0**: Destination MAC Address (first 6 bytes)
+- **5c ba ef 60 cf 55**: Source MAC Address (next 6 bytes)
+- **08 00**: EtherType field, indicating the next protocol (0x0800 = IPv4)
+- **45**: IP Version and Header Length (0x45 = IPv4, header length of 20 bytes)
+- **00**: Type of Service (ToS) field, not used here.
+
+### IP Header
+- **02 50**: Total Length of the IP packet (0x0250 = 592 bytes)
+- **33 01**: Identification field, used for fragment reassembly.
+- **40 00**: Flags and Fragment Offset (Don't Fragment flag set)
+- **40 06**: Time to Live (TTL) and Protocol (0x06 = TCP)
+- **35 bc**: Header Checksum for error-checking.
+- **c0 a8 01 67**: Source IP Address (192.168.1.103)
+- **ca 46 43 95**: Destination IP Address (202.70.67.149)
+
+### TCP Header
+- **ca c2**: Source Port (51906)
+- **00 51**: Destination Port (81)
+- **ab 13 04 27**: Sequence Number
+- **4b e4 d2 92**: Acknowledgment Number
+- **50**: Data Offset and Flags (Header length = 20 bytes, ACK flag set)
+- **18**: Window Size
+
+### HTTP Request
+- **04 6b d2 2d 00 00**: Checksum and Urgent Pointer (unused here)
+- **50 4f 53 54**: ASCII for "POST" - indicating the HTTP method.
+- **20 2f 4c 6f 67 69**: ASCII for "/Login" - the URL being accessed.
+- **6e 20 48 54 54 50 2f 31 2e 31**: ASCII for "n HTTP/1.1" - indicating the HTTP version.
+- **0d 0a**: Carriage Return and Line Feed (CRLF), ending the line.
+
+### HTTP Headers
+- **3a 20 65 78 61 6d**: ASCII for ": exam" - the start of the hostname.
+- **70 3a 38 31**: ASCII for "p:81" - indicating the port number.
+- **0d 0a**: CRLF, ending the line.
+- **43 6f 6e 6e 65 63 74 69 6f 6e**: ASCII for "Connection" header.
+- **3a 20 6b 65 65 70**: ASCII for ": keep-alive" - indicating persistent connection.
+
+### Content-Length and Accept Headers
+- **6e 74 65 6e 74**: ASCII for "ntent-Length: 51" - the length of the request body.
+- **0d 0a**: CRLF, ending the line.
+- **41 63 63 65 70 74 3a 20**: ASCII for "Accept: */*" - indicating the accepted response types.
+
+### User-Agent and Content-Type Headers
+- **55 73 65 72**: ASCII for "User-Agent" header.
+- **69 6c 6c 61 2f 35**: ASCII for "Mozilla/5.0".
+
+### Example Request Body (JSON Payload)
+- **7b 22 55 73 65 72 4e 61 6d 65**: ASCII for `{"UserName":"PAS077BCT031"`.
+- **22 50 61 73 73 77 6f 72 64**: ASCII for `"Password":"2060-02-07"}`.
+
+## Summary
+
+This analysis breaks down each part of the HTTP POST request, including the Ethernet, IP, and TCP headers, as well as the HTTP request headers and body. Understanding these details can be crucial for network analysis, security assessments, or understanding how web traffic is structured.
+
